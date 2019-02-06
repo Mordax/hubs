@@ -408,6 +408,9 @@ AFRAME.registerComponent("gltf-model-plus", {
       });
 
       this.el.emit("model-loaded", { format: "gltf", model: this.model });
+      this.el.object3D.traverse(obj => {
+        obj.frustumCulled = false;
+      });
     } catch (e) {
       delete GLTFCache[src];
       console.error("Failed to load glTF model", e, this);

@@ -546,6 +546,9 @@ AFRAME.registerComponent("media-video", {
 
     this.updatePlaybackState(true);
 
+    this.el.object3D.traverse(obj => {
+      obj.frustumCulled = false;
+    });
     this.el.emit("video-loaded");
   },
 
@@ -677,6 +680,9 @@ AFRAME.registerComponent("media-image", {
       fitToTexture(this.el, texture);
     }
 
+    this.el.object3D.traverse(obj => {
+      obj.frustumCulled = false;
+    });
     this.el.emit("image-loaded", { src: this.data.src });
   }
 });
