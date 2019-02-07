@@ -25,7 +25,6 @@ import "./utils/threejs-world-update";
 import { detectOS, detect } from "detect-browser";
 import { getReticulumFetchUrl } from "./utils/phoenix-utils";
 
-import nextTick from "./utils/next-tick";
 import { addAnimationComponents } from "./utils/animation";
 import { Presence } from "phoenix";
 
@@ -110,6 +109,7 @@ import "./systems/userinput/userinput";
 import "./systems/camera-mirror";
 import "./systems/userinput/userinput-debug";
 import "./systems/frame-scheduler";
+import "./systems/ticker";
 
 import "./gltf-component-mappings";
 
@@ -174,6 +174,8 @@ const concurrentLoadDetector = new ConcurrentLoadDetector();
 concurrentLoadDetector.start();
 
 store.init();
+
+window.stuffToLoad = 0;
 
 function getPlatformUnsupportedReason() {
   if (typeof RTCDataChannelEvent === "undefined") return "no_data_channels";
@@ -358,18 +360,35 @@ async function handleHubChannelJoined(entryManager, hubChannel, messageDispatch,
   objectsEl.addEventListener("model-loaded", async el => {
     if (el.target !== objectsEl) return;
 
+    window.uiroot && window.uiroot.setState({ loadingText: `Scene objects loaded!` });
     scene.setAttribute("networked-scene", {
       room: hub.hub_id,
       serverURL: `wss://${hub.host}`,
       debug: !!isDebug
     });
 
-    while (!scene.components["networked-scene"] || !scene.components["networked-scene"].data) await nextTick();
+    while (!scene.components["networked-scene"] || !scene.components["networked-scene"].data) {
+      await AFRAME.scenes[0].systems.ticker.nextTick();
+    }
 
     scene.components["networked-scene"]
       .connect()
       .then(() => {
+        window.uiroot && window.uiroot.setState({ connectionText: `Connection established!` });
         let newHostPollInterval = null;
+
+        const i = window.setInterval(() => {
+          if (window.stuffToLoad === 0) {
+            window.uiroot && window.uiroot.setState({ sceneObjectsLoaded: true });
+            window.clearInterval(i);
+          } else {
+            const text =
+              window.stuffToLoad > 1
+                ? `Loading ${window.stuffToLoad} more objects...`
+                : `Loading ${last} from ${split[2]}...`;
+            window.uiroot && window.uiroot.setState({ loadingText: text });
+          }
+        }, 1000);
 
         // When reconnecting, update the server URL if necessary
         NAF.connection.adapter.setReconnectionListeners(
@@ -421,7 +440,7 @@ async function runBotMode(scene, entryManager) {
   const noop = () => {};
   scene.renderer = { setAnimationLoop: noop, render: noop };
 
-  while (!NAF.connection.isConnected()) await nextTick();
+  while (!NAF.connection.isConnected()) await AFRAME.scenes[0].systems.ticker.nextTick();
   entryManager.enterSceneWhenLoaded(new MediaStream(), false);
 }
 
@@ -517,7 +536,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     initialIsSubscribed: subscriptions.isSubscribed()
   });
 
-  scene.addEventListener("action_focus_chat", () => document.querySelector(".chat-focus-target").focus());
+  scene.addEventListener("action_focus_chat", () => {
+    const chatFocusTarget = document.querySelector(".chat-focus-target");
+    chatFocusTarget && chatFocusTarget.focus();
+  });
 
   pollForSupportAvailability(isSupportAvailable => remountUI({ isSupportAvailable }));
 
@@ -638,9 +660,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const messageDispatch = new MessageDispatch(scene, entryManager, hubChannel, addToPresenceLog, remountUI);
 
+  window.uiroot && window.uiroot.setState({ connectionText: `Establishing connection..` });
   hubPhxChannel
     .join()
     .receive("ok", async data => {
+      window.uiroot && window.uiroot.setState({ connectionText: `Establishing connection...` });
       hubChannel.setPhoenixChannel(hubPhxChannel);
       hubChannel.setPermissionsFromToken(data.perms_token);
       scene.addEventListener("adapter-ready", ({ detail: adapter }) => {

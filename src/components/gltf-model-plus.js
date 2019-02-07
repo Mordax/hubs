@@ -1,4 +1,3 @@
-import nextTick from "../utils/next-tick";
 import { forEachMaterial } from "../utils/material-utils";
 import SketchfabZipWorker from "../workers/sketchfab-zip.worker.js";
 import MobileStandardMaterial from "../materials/MobileStandardMaterial";
@@ -325,7 +324,22 @@ AFRAME.registerComponent("gltf-model-plus", {
         return;
       }
 
+      window.stuffToLoad += 1;
+      const t = src;
+      const split = t.split("/");
+      let last = split[split.length - 1];
+      last = last.length > 25 ? last.substring(last.length - 25, last.length) : last;
+      const text =
+        window.stuffToLoad > 1
+          ? `Loading ${window.stuffToLoad} more objects...`
+          : `Loading ${last} from ${split[2]}...`;
+
+      window.uiroot && window.uiroot.setState({ loadingText: text });
       const gltf = await this.loadModel(src, contentType, this.preferredTechnique, this.data.useCache);
+      window.stuffToLoad -= 1;
+      if (window.stuffToLoad === 0){
+        window.uiroot && window.uiroot.setState({ loadingText : "Objects loaded!"});
+      }
 
       // If we started loading something else already
       // TODO: there should be a way to cancel loading instead
@@ -352,7 +366,7 @@ AFRAME.registerComponent("gltf-model-plus", {
         object3DToSet = this.inflatedEl.object3D;
         // TODO: Still don't fully understand the lifecycle here and how it differs between browsers, we should dig in more
         // Wait one tick for the appended custom elements to be connected before attaching templates
-        await nextTick();
+        await AFRAME.scenes[0].systems.ticker.nextTick();
         if (src != this.lastSrc) return; // TODO: there must be a nicer pattern for this
         for (const name in this.templates) {
           attachTemplate(this.el, name, this.templates[name]);
@@ -407,11 +421,16 @@ AFRAME.registerComponent("gltf-model-plus", {
         }
       });
 
-      this.el.emit("model-loaded", { format: "gltf", model: this.model });
       this.el.object3D.traverse(obj => {
         obj.frustumCulled = false;
       });
+      this.el.emit("model-loaded", { format: "gltf", model: this.model });
+      await AFRAME.scenes[0].systems.ticker.nextTick();
+      this.el.object3D.traverse(obj => {
+        obj.frustumCulled = true;
+      });
     } catch (e) {
+      window.stuffToLoad -= 1;
       delete GLTFCache[src];
       console.error("Failed to load glTF model", e, this);
       this.el.emit("model-error", { format: "gltf", src });

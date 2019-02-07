@@ -546,10 +546,15 @@ AFRAME.registerComponent("media-video", {
 
     this.updatePlaybackState(true);
 
+    this.el.emit("video-loaded");
+
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = false;
     });
-    this.el.emit("video-loaded");
+    await AFRAME.scenes[0].systems.ticker.nextTick();
+    this.el.object3D.traverse(obj => {
+      obj.frustumCulled = true;
+    });
   },
 
   updateHoverMenuBasedOnLiveState() {
@@ -618,6 +623,17 @@ AFRAME.registerComponent("media-image", {
       const { src, contentType } = this.data;
       if (!src) return;
 
+      window.stuffToLoad += 1;
+      const t = src;
+      const split = t.split("/");
+      let last = split[split.length - 1];
+      last = last.length > 31 ? last.substring(last.length - 31, last.length) : last;
+      const text =
+        window.stuffToLoad > 1
+          ? `Loading ${window.stuffToLoad} more objects...`
+          : `Loading ${last} from ${split[2]}...`;
+      window.uiroot && window.uiroot.setState({ loadingText: text });
+
       if (this.mesh && this.mesh.map && src !== oldData.src) {
         this.mesh.material.map = null;
         this.mesh.material.needsUpdate = true;
@@ -647,9 +663,15 @@ AFRAME.registerComponent("media-image", {
           return;
         }
       }
+      window.stuffToLoad -= 1;
     } catch (e) {
+      window.stuffToLoad -= 1;
       console.error("Error loading image", this.data.src, e);
       texture = errorTexture;
+    }
+
+    if (window.stuffToLoad === 0) {
+      window.uiroot && window.uiroot.setState({ loadingText: "Objects loaded!" });
     }
 
     const projection = this.data.projection;
@@ -680,9 +702,14 @@ AFRAME.registerComponent("media-image", {
       fitToTexture(this.el, texture);
     }
 
+    this.el.emit("image-loaded", { src: this.data.src });
+
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = false;
     });
-    this.el.emit("image-loaded", { src: this.data.src });
+    await AFRAME.scenes[0].systems.ticker.nextTick();
+    this.el.object3D.traverse(obj => {
+      obj.frustumCulled = true;
+    });
   }
 });

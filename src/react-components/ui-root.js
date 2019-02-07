@@ -132,6 +132,10 @@ class UIRoot extends Component {
     linkCodeCancel: null,
     miniInviteActivated: false,
 
+    sceneObjectsLoaded: false,
+    loadingText: "Loading objects...",
+    connectionText: "Establishing connection...",
+
     shareScreen: false,
     requestedScreen: false,
     mediaStream: null,
@@ -163,6 +167,7 @@ class UIRoot extends Component {
 
   constructor(props) {
     super(props);
+    window.uiroot = this;
     if (props.showSafariMicDialog) {
       this.state.dialog = <SafariMicDialog closable={false} />;
     }
@@ -776,7 +781,8 @@ class UIRoot extends Component {
               You can also{" "}
               <WithHoverSound>
                 <a href="/">create a new room</a>
-              </WithHoverSound>.
+              </WithHoverSound>
+              .
             </div>
           )}
         </div>
@@ -814,6 +820,17 @@ class UIRoot extends Component {
           </div>
 
           <img className="loading-panel__logo" src="../assets/images/hub-preview-light-no-shadow.png" />
+
+          <h4
+            className={
+              this.state.connectionText.indexOf("Connection established!") !== -1 ? "loadedText" : "loadingText"
+            }
+          >
+            {this.state.connectionText}
+          </h4>
+          <h4 className={this.state.loadingText.indexOf("loaded") !== -1 ? "loadedText" : "loadingText"}>
+            {this.state.loadingText}
+          </h4>
         </div>
       </IntlProvider>
     );
@@ -1149,8 +1166,9 @@ class UIRoot extends Component {
   render() {
     const isExited = this.state.exited || this.props.roomUnavailableReason || this.props.platformUnsupportedReason;
     const isLoading =
-      !this.props.showSafariMicDialog &&
-      (!this.props.environmentSceneLoaded || !this.props.availableVREntryTypes || !this.props.hubId);
+      !this.state.sceneObjectsLoaded ||
+      (!this.props.showSafariMicDialog &&
+        (!this.props.environmentSceneLoaded || !this.props.availableVREntryTypes || !this.props.hubId));
 
     if (isExited) return this.renderExitedPane();
     if (isLoading) return this.renderLoader();

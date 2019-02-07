@@ -1,6 +1,5 @@
 import qsTruthy from "./utils/qs_truthy";
 import screenfull from "screenfull";
-import nextTick from "./utils/next-tick";
 import pinnedEntityToGltf from "./utils/pinned-entity-to-gltf";
 
 const playerHeight = 1.6;
@@ -32,6 +31,7 @@ export default class SceneEntryManager {
   init = () => {
     this.whenSceneLoaded(() => {
       this.cursorController.components["cursor-controller"].enabled = false;
+      this._setupPlayerRig();
     });
   };
 
@@ -78,7 +78,12 @@ export default class SceneEntryManager {
       this.playerRig.setAttribute("virtual-gamepad-controls", {});
     }
 
-    this._setupPlayerRig();
+    //    this._setupPlayerRig();
+
+    const model = document.querySelector("#player-rig .model").object3D;
+    model.visible = true;
+    this.started = true;
+
     this._setupBlocking();
     this._setupKicking();
     this._setupMedia(mediaStream);
@@ -109,7 +114,7 @@ export default class SceneEntryManager {
     // Delay sending entry event telemetry until VR display is presenting.
     (async () => {
       while (enterInVR && !(await navigator.getVRDisplays()).find(d => d.isPresenting)) {
-        await nextTick();
+        await AFRAME.scenes[0].systems.ticker.nextTick();
       }
 
       this.hubChannel.sendEntryEvent().then(() => {
@@ -146,7 +151,7 @@ export default class SceneEntryManager {
     document.body.removeEventListener("touchend", requestFullscreen);
   };
 
-  _setupPlayerRig = () => {
+  _setupPlayerRig = async () => {
     this._updatePlayerRigWithProfile();
     this.store.addEventListener("statechanged", this._updatePlayerRigWithProfile);
 
@@ -155,6 +160,16 @@ export default class SceneEntryManager {
     if (avatarScale) {
       this.playerRig.setAttribute("scale", { x: avatarScale, y: avatarScale, z: avatarScale });
     }
+
+    const model = document.querySelector("#player-rig .model").object3D;
+    this.playerRig.addEventListener("model-loaded", async e => {
+      if (e.target !== model.el) return;
+      model.visible = true;
+      await AFRAME.scenes[0].systems.ticker.nextTick();
+      if (!this.started) {
+        model.visible = false;
+      }
+    });
   };
 
   _updatePlayerRigWithProfile = () => {
@@ -457,7 +472,7 @@ export default class SceneEntryManager {
     do {
       audioInput = document.querySelector("#bot-audio-input");
       dataInput = document.querySelector("#bot-data-input");
-      await nextTick();
+      await AFRAME.scenes[0].systems.ticker.nextTick();
     } while (!audioInput || !dataInput);
 
     audioInput.onchange = () => {
