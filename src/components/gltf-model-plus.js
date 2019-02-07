@@ -325,20 +325,13 @@ AFRAME.registerComponent("gltf-model-plus", {
       }
 
       window.stuffToLoad += 1;
-      const t = src;
-      const split = t.split("/");
-      let last = split[split.length - 1];
-      last = last.length > 25 ? last.substring(last.length - 25, last.length) : last;
-      const text =
-        window.stuffToLoad > 1
-          ? `Loading ${window.stuffToLoad} more objects...`
-          : `Loading ${last} from ${split[2]}...`;
-
+      let text = `Loading ${window.stuffToLoad} more object${window.stuffToLoad > 1 ? "s" : ""}...`;
       window.uiroot && window.uiroot.setState({ loadingText: text });
       const gltf = await this.loadModel(src, contentType, this.preferredTechnique, this.data.useCache);
       window.stuffToLoad -= 1;
-      if (window.stuffToLoad === 0){
-        window.uiroot && window.uiroot.setState({ loadingText : "Objects loaded!"});
+      if (window.stuffToLoad > 0) {
+        text = `Loading ${window.stuffToLoad} more object${window.stuffToLoad > 1 ? "s" : ""}...`;
+        window.uiroot && window.uiroot.setState({ loadingText: text });
       }
 
       // If we started loading something else already

@@ -134,7 +134,6 @@ class UIRoot extends Component {
 
     sceneObjectsLoaded: false,
     loadingText: "Loading objects...",
-    connectionText: "Establishing connection...",
 
     shareScreen: false,
     requestedScreen: false,
@@ -821,14 +820,7 @@ class UIRoot extends Component {
 
           <img className="loading-panel__logo" src="../assets/images/hub-preview-light-no-shadow.png" />
 
-          <h4
-            className={
-              this.state.connectionText.indexOf("Connection established!") !== -1 ? "loadedText" : "loadingText"
-            }
-          >
-            {this.state.connectionText}
-          </h4>
-          <h4 className={this.state.loadingText.indexOf("loaded") !== -1 ? "loadedText" : "loadingText"}>
+          <h4 className={this.state.loadingText.indexOf("lobby") !== -1 ? "loadedText" : "loadingText"}>
             {this.state.loadingText}
           </h4>
         </div>

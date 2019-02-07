@@ -624,14 +624,7 @@ AFRAME.registerComponent("media-image", {
       if (!src) return;
 
       window.stuffToLoad += 1;
-      const t = src;
-      const split = t.split("/");
-      let last = split[split.length - 1];
-      last = last.length > 31 ? last.substring(last.length - 31, last.length) : last;
-      const text =
-        window.stuffToLoad > 1
-          ? `Loading ${window.stuffToLoad} more objects...`
-          : `Loading ${last} from ${split[2]}...`;
+      const text = `Loading ${window.stuffToLoad} more object${window.stuffToLoad > 1 ? "s" : ""}...`;
       window.uiroot && window.uiroot.setState({ loadingText: text });
 
       if (this.mesh && this.mesh.map && src !== oldData.src) {
@@ -670,8 +663,9 @@ AFRAME.registerComponent("media-image", {
       texture = errorTexture;
     }
 
-    if (window.stuffToLoad === 0) {
-      window.uiroot && window.uiroot.setState({ loadingText: "Objects loaded!" });
+    if (window.stuffToLoad > 0) {
+      const text = `Loading ${window.stuffToLoad} more object${window.stuffToLoad > 1 ? "s" : ""}...`;
+      window.uiroot && window.uiroot.setState({ loadingText: text });
     }
 
     const projection = this.data.projection;

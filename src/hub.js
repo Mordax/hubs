@@ -360,7 +360,6 @@ async function handleHubChannelJoined(entryManager, hubChannel, messageDispatch,
   objectsEl.addEventListener("model-loaded", async el => {
     if (el.target !== objectsEl) return;
 
-    window.uiroot && window.uiroot.setState({ loadingText: `Scene objects loaded!` });
     scene.setAttribute("networked-scene", {
       room: hub.hub_id,
       serverURL: `wss://${hub.host}`,
@@ -374,21 +373,25 @@ async function handleHubChannelJoined(entryManager, hubChannel, messageDispatch,
     scene.components["networked-scene"]
       .connect()
       .then(() => {
-        window.uiroot && window.uiroot.setState({ connectionText: `Connection established!` });
         let newHostPollInterval = null;
 
+        let done = 0;
         const i = window.setInterval(() => {
           if (window.stuffToLoad === 0) {
-            window.uiroot && window.uiroot.setState({ sceneObjectsLoaded: true });
-            window.clearInterval(i);
+            done += 1;
+            if (done > 10) {
+              window.uiroot && window.uiroot.setState({ sceneObjectsLoaded: true });
+              window.clearInterval(i);
+            } else {
+              const text = `Joining lobby...`;
+              window.uiroot && window.uiroot.setState({ loadingText: text });
+            }
           } else {
-            const text =
-              window.stuffToLoad > 1
-                ? `Loading ${window.stuffToLoad} more objects...`
-                : `Loading ${last} from ${split[2]}...`;
+            done = 0;
+            const text = `Loading ${window.stuffToLoad} more object${window.stuffToLoad > 1 ? "s" : ""}...`;
             window.uiroot && window.uiroot.setState({ loadingText: text });
           }
-        }, 1000);
+        }, 100);
 
         // When reconnecting, update the server URL if necessary
         NAF.connection.adapter.setReconnectionListeners(
@@ -660,11 +663,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const messageDispatch = new MessageDispatch(scene, entryManager, hubChannel, addToPresenceLog, remountUI);
 
-  window.uiroot && window.uiroot.setState({ connectionText: `Establishing connection..` });
   hubPhxChannel
     .join()
     .receive("ok", async data => {
-      window.uiroot && window.uiroot.setState({ connectionText: `Establishing connection...` });
       hubChannel.setPhoenixChannel(hubPhxChannel);
       hubChannel.setPermissionsFromToken(data.perms_token);
       scene.addEventListener("adapter-ready", ({ detail: adapter }) => {
