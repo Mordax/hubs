@@ -359,7 +359,7 @@ AFRAME.registerComponent("gltf-model-plus", {
         object3DToSet = this.inflatedEl.object3D;
         // TODO: Still don't fully understand the lifecycle here and how it differs between browsers, we should dig in more
         // Wait one tick for the appended custom elements to be connected before attaching templates
-        await AFRAME.scenes[0].systems.ticker.nextTick();
+        await AFRAME.scenes[0].systems.nextframe.nextFrame();
         if (src != this.lastSrc) return; // TODO: there must be a nicer pattern for this
         for (const name in this.templates) {
           attachTemplate(this.el, name, this.templates[name]);
@@ -418,7 +418,7 @@ AFRAME.registerComponent("gltf-model-plus", {
         obj.frustumCulled = false;
       });
       this.el.emit("model-loaded", { format: "gltf", model: this.model });
-      await AFRAME.scenes[0].systems.ticker.nextTick();
+      await AFRAME.scenes[0].systems.nextframe.nextFrame();
       this.el.object3D.traverse(obj => {
         obj.frustumCulled = true;
       });

@@ -109,7 +109,7 @@ import "./systems/userinput/userinput";
 import "./systems/camera-mirror";
 import "./systems/userinput/userinput-debug";
 import "./systems/frame-scheduler";
-import "./systems/ticker";
+import "./systems/next-frame";
 
 import "./gltf-component-mappings";
 
@@ -367,7 +367,7 @@ async function handleHubChannelJoined(entryManager, hubChannel, messageDispatch,
     });
 
     while (!scene.components["networked-scene"] || !scene.components["networked-scene"].data) {
-      await AFRAME.scenes[0].systems.ticker.nextTick();
+      await AFRAME.scenes[0].systems.nextframe.nextFrame();
     }
 
     scene.components["networked-scene"]
@@ -443,7 +443,7 @@ async function runBotMode(scene, entryManager) {
   const noop = () => {};
   scene.renderer = { setAnimationLoop: noop, render: noop };
 
-  while (!NAF.connection.isConnected()) await AFRAME.scenes[0].systems.ticker.nextTick();
+  while (!NAF.connection.isConnected()) await AFRAME.scenes[0].systems.nextframe.nextFrame();
   entryManager.enterSceneWhenLoaded(new MediaStream(), false);
 }
 

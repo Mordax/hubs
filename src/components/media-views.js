@@ -551,7 +551,7 @@ AFRAME.registerComponent("media-video", {
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = false;
     });
-    await AFRAME.scenes[0].systems.ticker.nextTick();
+    await AFRAME.scenes[0].systems.nextframe.nextFrame();
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = true;
     });
@@ -701,7 +701,7 @@ AFRAME.registerComponent("media-image", {
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = false;
     });
-    await AFRAME.scenes[0].systems.ticker.nextTick();
+    await AFRAME.scenes[0].systems.nextframe.nextFrame();
     this.el.object3D.traverse(obj => {
       obj.frustumCulled = true;
     });

@@ -1,4 +1,4 @@
-AFRAME.registerSystem("ticker", {
+AFRAME.registerSystem("nextframe", {
   init() {
     this.promises = [];
     this.nextPromises = [];
@@ -15,7 +15,7 @@ AFRAME.registerSystem("ticker", {
     this.nextPromises.length = 0;
   },
 
-  nextTick() {
+  nextFrame() {
     return new Promise(resolve => {
       this.nextPromises.push(resolve);
     });

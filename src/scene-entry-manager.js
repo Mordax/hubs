@@ -114,7 +114,7 @@ export default class SceneEntryManager {
     // Delay sending entry event telemetry until VR display is presenting.
     (async () => {
       while (enterInVR && !(await navigator.getVRDisplays()).find(d => d.isPresenting)) {
-        await AFRAME.scenes[0].systems.ticker.nextTick();
+        await AFRAME.scenes[0].systems.nextframe.nextFrame();
       }
 
       this.hubChannel.sendEntryEvent().then(() => {
@@ -165,7 +165,7 @@ export default class SceneEntryManager {
     this.playerRig.addEventListener("model-loaded", async e => {
       if (e.target !== model.el) return;
       model.visible = true;
-      await AFRAME.scenes[0].systems.ticker.nextTick();
+      await AFRAME.scenes[0].systems.nextframe.nextFrame();
       if (!this.started) {
         model.visible = false;
       }
@@ -472,7 +472,7 @@ export default class SceneEntryManager {
     do {
       audioInput = document.querySelector("#bot-audio-input");
       dataInput = document.querySelector("#bot-data-input");
-      await AFRAME.scenes[0].systems.ticker.nextTick();
+      await AFRAME.scenes[0].systems.nextframe.nextFrame();
     } while (!audioInput || !dataInput);
 
     audioInput.onchange = () => {
